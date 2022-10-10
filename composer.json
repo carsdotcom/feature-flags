@@ -1,0 +1,24 @@
+{
+    "name": "carsdotcom/feature-flags",
+    "description": "Interfaced feature flag solution",
+    "type": "library",
+    "license": "proprietary",
+    "minimum-stability": "stable",
+    "require": {
+        "php": "~5.5",
+        "splitsoftware/split-sdk-php": "^6.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Carsdotcom\\FeatureFlags\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Carsdotcom\\Tests\\": "tests/"
+        }
+    }
+}

@@ -1,0 +1,7 @@
+- my_feature:
+    treatment: "off"
+    keys: "some-user@dealerinspire.com"
+- some_other_feature:
+    treatment: "off"
+- my_feature:
+    treatment: "on"
