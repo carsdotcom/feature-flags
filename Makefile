@@ -10,7 +10,7 @@ up:
 down:
 	docker stop feature-flag-testing-container
 
-shell:
+shell: up
 	docker exec -it feature-flag-testing-container bash
 
 install:
@@ -38,5 +38,3 @@ test:
 	@echo "Stopping and removing container..."
 	@docker stop feature-flag-testing-container
 	@echo "done!"
-
-coverage

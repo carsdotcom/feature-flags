@@ -18,7 +18,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Carsdotcom\\Tests\\": "tests/"
+            "Carsdotcom\\FeatureFlags\\Tests\\": "tests/"
         }
     }
 }

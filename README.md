@@ -96,3 +96,25 @@ try {
     // if the feature flag we called '$flags->enabled()' did not exist in the system, this exception is thrown 
 }
 ```
+
+## Null Feature Flag
+This service will **always** return as if there are no feature flags enabled/exist and never throw any exceptions.
+
+```php
+use \Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlag;
+use \Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlagUser;
+
+$flags = new NullFeatureFlag();
+
+// any value can be sent to the NullFeatureFlagUser to instantiate it
+$flags->setUser(new NullFeatureFlagUser(null));
+
+// will always return an empty array
+$flags->all();
+
+// will always return false
+$flags->exists('foobar');
+
+// will always return false
+$flags->enabled('foobar');
+```

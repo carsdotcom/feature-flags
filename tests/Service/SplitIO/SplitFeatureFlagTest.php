@@ -1,6 +1,6 @@
 <?php
 
-namespace Carsdotcom\Tests;
+namespace Carsdotcom\FeatureFlags\Tests;
 
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
@@ -16,7 +16,7 @@ class SplitFeatureFlagTest extends TestCase
 
     function setup()
     {
-        $factory = new LocalhostSplitFactory(['splitFile' => __DIR__ . '/data/SplitIO/split.yaml']);
+        $factory = new LocalhostSplitFactory(['splitFile' => __DIR__ . '/../../data/SplitIO/split.yaml']);
         $this->split = SplitFeatureFlag::getInstance()
             ->setFactory($factory)
             ->setClient($factory->client())

@@ -1,6 +1,6 @@
 <?php
 
-namespace Carsdotcom\Tests;
+namespace Carsdotcom\FeatureFlags\Tests;
 
 use Carsdotcom\FeatureFlags\Service\SplitIO\SplitFeatureFlagUser;
 use PHPUnit\Framework\TestCase;
