@@ -105,11 +105,9 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_throw_invalid_feature_flag_exception_if_enabled_called_with_nonexistent_flag()
+    function it_will_return_false_if_enabled_called_with_nonexistent_flag()
     {
-        $this->setExpectedException(InvalidFeatureFlagException::class);
-
-        $this->split->enabled('foobar');
+        $this->assertFalse($this->split->enabled('foobar'));
     }
 
     /**

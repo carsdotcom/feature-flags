@@ -31,11 +31,10 @@ interface FeatureFlag
 
     /**
      * Will return true/false if the feature flag is enabled. if the feature flag doesn't exist this function
-     * should throw InvalidFeatureFlagException
+     * should return false
      *
      * @param String $featureFlagIdentifier
      * @return bool
-     * @throws InvalidFeatureFlagException
      * @throws InvalidFeatureFlagUserException
      */
     public function enabled($featureFlagIdentifier);

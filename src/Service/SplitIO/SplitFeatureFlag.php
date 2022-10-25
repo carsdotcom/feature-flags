@@ -185,16 +185,11 @@ class SplitFeatureFlag implements FeatureFlag
     /**
      * @param $featureFlagIdentifier
      * @return bool
-     * @throws InvalidFeatureFlagException
      * @throws InvalidFeatureFlagUserException
      */
     public function enabled($featureFlagIdentifier)
     {
         $enabled = $this->client->getTreatment($this->getUser()->getId(), $featureFlagIdentifier);
-
-        if ($enabled === 'control') {
-            throw new InvalidFeatureFlagException;
-        }
 
         return $enabled === 'on';
     }
