@@ -46,4 +46,13 @@ interface FeatureFlag
      * @return bool
      */
     public function exists($featureFlagIdentifier);
+
+    /**
+     * Will return the decoded json in an array format. If feature flag doesn't exist will return an empty array
+     *
+     * @param $featureFlagIdentifier
+     * @return array
+     * @throws InvalidFeatureFlagUserException
+     */
+    public function config($featureFlagIdentifier);
 }

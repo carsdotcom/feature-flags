@@ -204,4 +204,25 @@ class SplitFeatureFlag implements FeatureFlag
     {
         return in_array($featureFlagIdentifier, $this->all());
     }
+
+    /**
+     * @param $featureFlagIdentifier
+     * @return array
+     * @throws InvalidFeatureFlagUserException
+     */
+    public function config($featureFlagIdentifier)
+    {
+        if (!$this->exists($featureFlagIdentifier)) {
+            return [];
+        }
+
+        $flagData = $this->client->getTreatmentWithConfig($this->getUser()->getId(), $featureFlagIdentifier);
+
+        // if no config has been defined in split it will return a null
+        if (is_null($flagData['config'])) {
+            return [];
+        }
+
+        return json_decode($flagData['config'], true);
+    }
 }

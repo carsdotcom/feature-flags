@@ -53,4 +53,12 @@ class NullFeatureFlag implements FeatureFlag
     {
         return false;
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function config($featureFlagIdentifier)
+    {
+        return [];
+    }
 }

@@ -82,7 +82,8 @@ class SplitFeatureFlagTest extends TestCase
     {
         $this->assertEquals([
             'my_feature',
-            'some_other_feature'
+            'some_other_feature',
+            'feature_with_config'
         ], $this->split->all());
     }
 
@@ -134,5 +135,21 @@ class SplitFeatureFlagTest extends TestCase
         $this->assertTrue($this->split->setUser(new SplitFeatureFlagUser('1234'))->enabled('my_feature'));
 
         $this->assertFalse($this->split->setUser(new SplitFeatureFlagUser('some-user@dealerinspire.com'))->enabled('my_feature'));
+    }
+
+    /**
+     * @test
+     */
+    function it_returns_correct_configuration_array_when_config_called()
+    {
+        $this->assertEquals(['desc' => 'this applies only to ON treatment'], $this->split->config('feature_with_config'));
+    }
+
+    /**
+     * @test
+     */
+    function it_returns_empty_array_when_configuration_does_not_exist_for_feature_flag()
+    {
+        $this->assertEquals([], $this->split->config('my_feature'));
     }
 }

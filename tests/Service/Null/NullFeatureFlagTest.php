@@ -56,4 +56,12 @@ class NullFeatureFlagTest extends TestCase
     {
         $this->assertFalse($this->featureFlags->exists('foobar'));
     }
+
+    /**
+     * @test
+     */
+    function it_will_return_empty_array_when_config_is_called()
+    {
+        $this->assertEquals([], $this->featureFlags->config('foobar'));
+    }
 }

@@ -5,3 +5,6 @@
     treatment: "off"
 - my_feature:
     treatment: "on"
+- feature_with_config:
+    treatment: "on"
+    config: "{\"desc\" : \"this applies only to ON treatment\"}"

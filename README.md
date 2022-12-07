@@ -117,4 +117,7 @@ $flags->exists('foobar');
 
 // will always return false
 $flags->enabled('foobar');
+
+// will always return en empty array
+$flags->config('foobar');
 ```
