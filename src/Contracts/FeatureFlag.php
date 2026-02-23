@@ -2,7 +2,6 @@
 
 namespace Carsdotcom\FeatureFlags\Contracts;
 
-use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 
 interface FeatureFlag

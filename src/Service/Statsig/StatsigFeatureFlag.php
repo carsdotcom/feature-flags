@@ -9,7 +9,6 @@ use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 use Carsdotcom\FeatureFlags\Service\Redis\RedisFeatureFlagCache;
 use GuzzleHttp\Client;
 use Throwable;
-use function SplitIO\Component\Utils\environment;
 
 class StatsigFeatureFlag implements FeatureFlag
 {

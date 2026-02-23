@@ -2,8 +2,6 @@
 
 namespace Carsdotcom\FeatureFlags\Tests\Service\Statsig;
 
-use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
-use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 use Carsdotcom\FeatureFlags\Service\Redis\RedisFeatureFlagCache;
 use Carsdotcom\FeatureFlags\Service\Statsig\StatsigFeatureFlag;
 use Carsdotcom\FeatureFlags\Service\Statsig\StatsigFeatureFlagUser;

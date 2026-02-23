@@ -2,11 +2,10 @@
 
 namespace Carsdotcom\FeatureFlags\Tests\Service\SplitIO;
 
-use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagException;
+use Carsdotcom\FeatureFlags\Contracts\FeatureFlag;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 use Carsdotcom\FeatureFlags\Service\SplitIO\SplitFeatureFlag;
-use Carsdotcom\FeatureFlags\Contracts\FeatureFlag;
 use Carsdotcom\FeatureFlags\Service\SplitIO\SplitFeatureFlagUser;
 use PHPUnit\Framework\TestCase;
 use SplitIO\Sdk\Factory\LocalhostSplitFactory;
