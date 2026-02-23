@@ -47,7 +47,7 @@ class SplitFeatureFlag implements FeatureFlag
     /**
      * @return SplitFeatureFlag
      */
-    public static function getInstance()
+    public static function getInstance(): self
     {
         if (is_null(self::$instance)) {
             self::$instance = new self();
@@ -57,11 +57,11 @@ class SplitFeatureFlag implements FeatureFlag
     }
 
     /**
-     * @param $settings
+     * @param array $settings
      * @return void
      * @throws InvalidFeatureFlagSettingsException
      */
-    public function initializeSettings($settings = [])
+    public function initializeSettings(array $settings = [])
     {
         if (!is_null($this->factory)) {
             return;
@@ -80,7 +80,7 @@ class SplitFeatureFlag implements FeatureFlag
      * @return void
      * @throws InvalidFeatureFlagSettingsException
      */
-    public function validateSettings($settings = [])
+    public function validateSettings(array $settings = [])
     {
         if (empty($settings['apiKey'])) {
             throw new InvalidFeatureFlagSettingsException;
@@ -91,7 +91,7 @@ class SplitFeatureFlag implements FeatureFlag
      * @param SplitFactoryInterface $factory
      * @return $this
      */
-    public function setFactory(SplitFactoryInterface $factory)
+    public function setFactory(SplitFactoryInterface $factory): self
     {
         $this->factory = $factory;
 
@@ -102,7 +102,7 @@ class SplitFeatureFlag implements FeatureFlag
      * @param ClientInterface $client
      * @return $this
      */
-    public function setClient(ClientInterface $client)
+    public function setClient(ClientInterface $client): self
     {
         $this->client = $client;
 
@@ -113,7 +113,7 @@ class SplitFeatureFlag implements FeatureFlag
      * @param SplitManagerInterface $manager
      * @return $this
      */
-    public function setManager(SplitManagerInterface $manager)
+    public function setManager(SplitManagerInterface $manager): self
     {
         $this->manager = $manager;
 
@@ -127,7 +127,7 @@ class SplitFeatureFlag implements FeatureFlag
      * @return self
      * @throws InvalidFeatureFlagUserException
      */
-    public function setUser(FeatureFlagUser $user)
+    public function setUser(FeatureFlagUser $user): self
     {
         if (is_null($user->getId())) {
             throw new InvalidFeatureFlagUserException();
@@ -155,7 +155,7 @@ class SplitFeatureFlag implements FeatureFlag
      *
      * @return array
      */
-    public function all()
+    public function all(): array
     {
         try{
             $flags = $this->manager->splits();
@@ -177,17 +177,11 @@ class SplitFeatureFlag implements FeatureFlag
      * Will return true/false if the feature flag is enabled. if the feature flag doesn't exist this function
      * should throw InvalidFeatureFlagException
      *
-     * @param String $featureFlagIdentifier
+     * @param string $featureFlagIdentifier
      * @return bool
      * @throws InvalidFeatureFlagException
      */
-
-    /**
-     * @param $featureFlagIdentifier
-     * @return bool
-     * @throws InvalidFeatureFlagUserException
-     */
-    public function enabled($featureFlagIdentifier)
+    public function enabled(string $featureFlagIdentifier): bool
     {
         $enabled = $this->client->getTreatment($this->getUser()->getId(), $featureFlagIdentifier);
 
@@ -197,20 +191,20 @@ class SplitFeatureFlag implements FeatureFlag
     /**
      * Will return true/false if the feature flag exists
      *
-     * @param String $featureFlagIdentifier
+     * @param string $featureFlagIdentifier
      * @return bool
      */
-    public function exists($featureFlagIdentifier)
+    public function exists(string $featureFlagIdentifier): bool
     {
         return in_array($featureFlagIdentifier, $this->all());
     }
 
     /**
-     * @param $featureFlagIdentifier
+     * @param string $featureFlagIdentifier
      * @return array
      * @throws InvalidFeatureFlagUserException
      */
-    public function config($featureFlagIdentifier)
+    public function config(string $featureFlagIdentifier): array
     {
         if (!$this->exists($featureFlagIdentifier)) {
             return [];

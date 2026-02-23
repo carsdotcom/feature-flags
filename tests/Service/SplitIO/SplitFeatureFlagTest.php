@@ -1,6 +1,6 @@
 <?php
 
-namespace Carsdotcom\FeatureFlags\Tests;
+namespace Carsdotcom\FeatureFlags\Tests\Service\SplitIO;
 
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
@@ -13,8 +13,9 @@ use SplitIO\Sdk\Factory\LocalhostSplitFactory;
 
 class SplitFeatureFlagTest extends TestCase
 {
+    private $split;
 
-    function setup()
+    public function setup()
     {
         $factory = new LocalhostSplitFactory(['splitFile' => __DIR__ . '/../../data/SplitIO/split.yaml']);
         $this->split = SplitFeatureFlag::getInstance()
@@ -26,7 +27,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_throws_exception_with_bad_settings()
+    public function it_throws_exception_with_bad_settings()
     {
         $this->setExpectedException(InvalidFeatureFlagSettingsException::class);
 
@@ -36,7 +37,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_is_an_instance_of_feature_flag_contract()
+    public function it_is_an_instance_of_feature_flag_contract()
     {
         $this->assertInstanceOf(FeatureFlag::class, $this->split, "SplitFeatureFlag should implement FeatureFlag interface.");
     }
@@ -44,7 +45,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_throw_invalid_user_exception_when_get_user_is_called_without_a_set_user()
+    public function it_will_throw_invalid_user_exception_when_get_user_is_called_without_a_set_user()
     {
         $this->setExpectedException(InvalidFeatureFlagUserException::class);
 
@@ -54,7 +55,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_can_set_a_valid_user()
+    public function it_can_set_a_valid_user()
     {
         $user = new SplitFeatureFlagUser('1234');
 
@@ -66,7 +67,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_throw_invalid_user_exception_when_invalid_user_is_set()
+    public function it_will_throw_invalid_user_exception_when_invalid_user_is_set()
     {
         $this->setExpectedException(InvalidFeatureFlagUserException::class);
 
@@ -78,7 +79,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_return_all_feature_flag_names()
+    public function it_will_return_all_feature_flag_names()
     {
         $this->assertEquals([
             'my_feature',
@@ -90,7 +91,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_return_true_when_a_flag_is_enbaled()
+    public function it_will_return_true_when_a_flag_is_enbaled()
     {
         $this->assertTrue($this->split->enabled('my_feature'));
     }
@@ -98,7 +99,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_return_false_when_a_flag_is_disabled()
+    public function it_will_return_false_when_a_flag_is_disabled()
     {
         $this->assertFalse($this->split->enabled('some_other_feature'));
     }
@@ -106,7 +107,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_return_false_if_enabled_called_with_nonexistent_flag()
+    public function it_will_return_false_if_enabled_called_with_nonexistent_flag()
     {
         $this->assertFalse($this->split->enabled('foobar'));
     }
@@ -114,7 +115,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_returns_false_if_nonexistent_flag_name_is_passed_to_exists()
+    public function it_returns_false_if_nonexistent_flag_name_is_passed_to_exists()
     {
         $this->assertFalse($this->split->exists('foobar'));
     }
@@ -122,7 +123,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_returns_true_if_nonexistent_flag_name_is_passed_to_exists()
+    public function it_returns_true_if_nonexistent_flag_name_is_passed_to_exists()
     {
         $this->assertTrue($this->split->exists('my_feature'));
     }
@@ -130,7 +131,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_evaluates_flag_based_on_provided_user()
+    public function it_evaluates_flag_based_on_provided_user()
     {
         $this->assertTrue($this->split->setUser(new SplitFeatureFlagUser('1234'))->enabled('my_feature'));
 
@@ -140,7 +141,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_returns_correct_configuration_array_when_config_called()
+    public function it_returns_correct_configuration_array_when_config_called()
     {
         $this->assertEquals(['desc' => 'this applies only to ON treatment'], $this->split->config('feature_with_config'));
     }
@@ -148,7 +149,7 @@ class SplitFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_returns_empty_array_when_configuration_does_not_exist_for_feature_flag()
+    public function it_returns_empty_array_when_configuration_does_not_exist_for_feature_flag()
     {
         $this->assertEquals([], $this->split->config('my_feature'));
     }

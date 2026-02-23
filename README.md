@@ -1,17 +1,24 @@
-# Feature Flags for PHP 5.5
-This SDK is designed to work with Split, the platform for controlled rollouts, serving features to your users via the Split feature flag to manage your complete customer experience.
+# Feature Flags for PHP 7.0
+This SDK is designed to work with Split and Statsig.
 
 
 ## Getting started
 
 ### Running Locally
-The repo comes with a PHP 5.5 docker container that includes xdebug and a handful of other nice to have PHP libraries/extensions enabled. 
-To run this locally, the very first thing you would want to do is install the composer dependencies. This is accomplished with run a simple Make command:
+The repo comes with a PHP 7.0 docker container that includes xdebug and a handful of other nice to have PHP libraries/extensions enabled. 
+
+To run this locally, start by building the Docker image:
+```shell
+$ make build
+```
+
+You can then install the Composer dependencies:
+
 ```shell
 $ make install
 ```
 
-Once the composer dependencies have been installed you can run the unit tests with another Make command:  
+Once the composer dependencies have been installed, you can run the unit tests:  
 ```shell
 $ make test
 ```
@@ -39,6 +46,49 @@ try {
         }
     } else {
         // the feature flag does not exist yet
+    }
+    
+} catch (\Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException $exception) {
+    // the user passed was invalid. This could happen if the user identifier wasn't sent during creation
+} catch (\Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagException $exception) {
+    // if the feature flag we called '$flags->enabled()' did not exist in the system, this exception is thrown 
+}
+```
+
+## Statsig
+
+Below is a simple example of using the SDK for Statsig. Note that in Statsig, "feature flags" are called "feature gates":
+
+```php
+<?php
+
+use \Carsdotcom\FeatureFlags\Service\Statsig\StatsigFeatureFlag;
+use \Carsdotcom\FeatureFlags\Service\Statsig\StatsigFeatureFlagUser;
+
+try {
+    // API keys are set up per environment. Make sure you use the correct apiKey/environment combo.
+    $sdkConfig = [
+        'apiKey' => 'API_KEY',
+        'environment' => 'production', // 'development', 'staging', or 'production'
+        'redisHost' => 'REDIS_HOST',
+        'redisPort' => 'REDIS_PORT',
+    ];
+    
+    $ccid = '123';
+
+    $flags = StatsigFeatureFlag::getInstance()
+        ->initializeSettings($sdkConfig)
+        ->setUser(new StatsigFeatureFlagUser($ccid));
+
+    // Check if a feature flag (gate) is enabled for the current user
+    // Calling $flags->exists() first is not needed for Statsig, as it adds unnecessary overhead
+    if ($flags->enabled('my-new-feature')) {
+        // ...
+    }
+
+    // Check if a feature flag (gate) name exists
+    if ($flags->exists('my-new-feature')) {
+        // ...
     }
     
 } catch (\Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException $exception) {
