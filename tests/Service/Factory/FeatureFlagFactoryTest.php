@@ -30,8 +30,13 @@ class FeatureFlagFactoryTest extends TestCase
         return [
             'apiKey'      => 'test-api-key',
             'environment' => 'staging',
-            'redisHost'   => 'localhost',
-            'redisPort'   => 6379,
+            'cache'       => [
+                'scheme'   => 'tcp',
+                'host'     => 'localhost',
+                'port'     => 6379,
+                'password' => null,
+                'prefix'   => 'test:',
+            ],
         ];
     }
 
@@ -153,8 +158,10 @@ class FeatureFlagFactoryTest extends TestCase
         try {
             FeatureFlagFactory::create([
                 'environment' => 'staging',
-                'redisHost'   => 'localhost',
-                'redisPort'   => 6379,
+                'cache'       => [
+                    'scheme' => 'tcp', 'host' => 'localhost',
+                    'port' => 6379, 'password' => null, 'prefix' => 'test:',
+                ],
             ], 'user123');
             $this->fail('Expected InvalidFeatureFlagSettingsException was not thrown');
         } catch (InvalidFeatureFlagSettingsException $e) {
@@ -169,9 +176,11 @@ class FeatureFlagFactoryTest extends TestCase
     {
         try {
             FeatureFlagFactory::create([
-                'apiKey'    => 'test-key',
-                'redisHost' => 'localhost',
-                'redisPort' => 6379,
+                'apiKey' => 'test-key',
+                'cache'  => [
+                    'scheme' => 'tcp', 'host' => 'localhost',
+                    'port' => 6379, 'password' => null, 'prefix' => 'test:',
+                ],
             ], 'user123');
             $this->fail('Expected InvalidFeatureFlagSettingsException was not thrown');
         } catch (InvalidFeatureFlagSettingsException $e) {
@@ -182,13 +191,12 @@ class FeatureFlagFactoryTest extends TestCase
     /**
      * @test
      */
-    public function create_throws_when_redisHost_is_missing()
+    public function create_throws_when_cache_is_missing()
     {
         try {
             FeatureFlagFactory::create([
                 'apiKey'      => 'test-key',
                 'environment' => 'staging',
-                'redisPort'   => 6379,
             ], 'user123');
             $this->fail('Expected InvalidFeatureFlagSettingsException was not thrown');
         } catch (InvalidFeatureFlagSettingsException $e) {
@@ -199,13 +207,18 @@ class FeatureFlagFactoryTest extends TestCase
     /**
      * @test
      */
-    public function create_throws_when_redisPort_is_missing()
+    public function create_throws_when_a_required_cache_setting_is_missing()
     {
         try {
             FeatureFlagFactory::create([
                 'apiKey'      => 'test-key',
                 'environment' => 'staging',
-                'redisHost'   => 'localhost',
+                'cache'       => [
+                    'scheme' => 'tcp', 'host' => 'localhost',
+                    'port' => 6379,
+                    // 'password' omitted intentionally
+                    'prefix' => 'test:',
+                ],
             ], 'user123');
             $this->fail('Expected InvalidFeatureFlagSettingsException was not thrown');
         } catch (InvalidFeatureFlagSettingsException $e) {

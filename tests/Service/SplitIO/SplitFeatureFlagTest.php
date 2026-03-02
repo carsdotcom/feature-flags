@@ -28,7 +28,7 @@ class SplitFeatureFlagTest extends TestCase
      */
     public function it_throws_exception_with_bad_settings()
     {
-        $this->setExpectedException(InvalidFeatureFlagSettingsException::class);
+        $this->expectException(InvalidFeatureFlagSettingsException::class);
 
         $this->split->validateSettings(['foo' => 'bar']);
     }
@@ -46,7 +46,7 @@ class SplitFeatureFlagTest extends TestCase
      */
     public function it_will_throw_invalid_user_exception_when_get_user_is_called_without_a_set_user()
     {
-        $this->setExpectedException(InvalidFeatureFlagUserException::class);
+        $this->expectException(InvalidFeatureFlagUserException::class);
 
         $this->split->getUser();
     }
@@ -68,7 +68,7 @@ class SplitFeatureFlagTest extends TestCase
      */
     public function it_will_throw_invalid_user_exception_when_invalid_user_is_set()
     {
-        $this->setExpectedException(InvalidFeatureFlagUserException::class);
+        $this->expectException(InvalidFeatureFlagUserException::class);
 
         $user = new SplitFeatureFlagUser(null);
 

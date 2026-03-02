@@ -101,8 +101,13 @@ class StatsigFeatureFlagTest extends TestCase
         $this->statsig->initializeSettings([
             'apiKey'      => 'test-api-key',
             'environment' => 'staging',
-            'redisHost'   => 'localhost',
-            'redisPort'   => 6379,
+            'cache'       => [
+                'scheme'   => 'tcp',
+                'host'     => 'localhost',
+                'port'     => 6379,
+                'password' => null,
+                'prefix'   => 'test:',
+            ],
         ]);
 
         $this->cacheStub = new StatsigTestCache();
@@ -147,8 +152,13 @@ class StatsigFeatureFlagTest extends TestCase
     {
         $this->statsig->validateSettings([
             'environment' => 'staging',
-            'redisHost'   => 'localhost',
-            'redisPort'   => 6379,
+            'cache'       => [
+                'scheme'   => 'tcp',
+                'host'     => 'localhost',
+                'port'     => 6379,
+                'password' => null,
+                'prefix'   => 'test:',
+            ],
         ]);
     }
 
@@ -159,9 +169,14 @@ class StatsigFeatureFlagTest extends TestCase
     public function validateSettings_throws_when_environment_is_missing()
     {
         $this->statsig->validateSettings([
-            'apiKey'    => 'test-key',
-            'redisHost' => 'localhost',
-            'redisPort' => 6379,
+            'apiKey' => 'test-key',
+            'cache'  => [
+                'scheme'   => 'tcp',
+                'host'     => 'localhost',
+                'port'     => 6379,
+                'password' => null,
+                'prefix'   => 'test:',
+            ],
         ]);
     }
 
@@ -169,12 +184,11 @@ class StatsigFeatureFlagTest extends TestCase
      * @test
      * @expectedException \Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException
      */
-    public function validateSettings_throws_when_redisHost_is_missing()
+    public function validateSettings_throws_when_cache_is_missing()
     {
         $this->statsig->validateSettings([
             'apiKey'      => 'test-key',
             'environment' => 'staging',
-            'redisPort'   => 6379,
         ]);
     }
 
@@ -182,12 +196,18 @@ class StatsigFeatureFlagTest extends TestCase
      * @test
      * @expectedException \Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException
      */
-    public function validateSettings_throws_when_redisPort_is_missing()
+    public function validateSettings_throws_when_a_required_cache_setting_is_missing()
     {
         $this->statsig->validateSettings([
             'apiKey'      => 'test-key',
             'environment' => 'staging',
-            'redisHost'   => 'localhost',
+            'cache'       => [
+                'scheme'   => 'tcp',
+                'host'     => 'localhost',
+                'port'     => 6379,
+                // 'password' omitted intentionally
+                'prefix'   => 'test:',
+            ],
         ]);
     }
 
@@ -199,8 +219,13 @@ class StatsigFeatureFlagTest extends TestCase
         $this->statsig->validateSettings([
             'apiKey'      => 'test-key',
             'environment' => 'staging',
-            'redisHost'   => 'localhost',
-            'redisPort'   => 6379,
+            'cache'       => [
+                'scheme'   => 'tcp',
+                'host'     => 'localhost',
+                'port'     => 6379,
+                'password' => null,
+                'prefix'   => 'test:',
+            ],
         ]);
         $this->assertTrue(true);
     }
@@ -287,8 +312,13 @@ class StatsigFeatureFlagTest extends TestCase
         $statsig->initializeSettings([
             'apiKey'      => 'test-key',
             'environment' => 'staging',
-            'redisHost'   => 'localhost',
-            'redisPort'   => 6379,
+            'cache'       => [
+                'scheme'   => 'tcp',
+                'host'     => 'localhost',
+                'port'     => 6379,
+                'password' => null,
+                'prefix'   => 'test:',
+            ],
         ]);
         $statsig->validateInitialization();
     }

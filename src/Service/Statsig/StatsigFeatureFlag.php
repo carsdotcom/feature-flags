@@ -8,6 +8,7 @@ use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 use Carsdotcom\FeatureFlags\Service\Redis\RedisFeatureFlagCache;
 use GuzzleHttp\Client;
+use Predis\Client as PredisClient;
 use Throwable;
 
 class StatsigFeatureFlag implements FeatureFlag
@@ -33,8 +34,18 @@ class StatsigFeatureFlag implements FeatureFlag
     const REQUIRED_SETTINGS = [
         'apiKey',
         'environment',
-        'redisHost',
-        'redisPort'
+        'cache',
+    ];
+
+    /**
+     * @var array
+     */
+    const REQUIRED_CACHE_SETTINGS = [
+        'scheme',
+        'host',
+        'port',
+        'password',
+        'prefix',
     ];
 
     /**
@@ -94,12 +105,13 @@ class StatsigFeatureFlag implements FeatureFlag
 
         $this->settings = $settings;
 
-        $redisClient = new \Predis\Client([
-            'scheme' => 'tcp',
-            'host' => $settings['redisHost'],
-            'port' => $settings['redisPort']
+        $redisClient = new PredisClient([
+            'scheme' => $settings['cache']['scheme'],
+            'host' => $settings['cache']['host'],
+            'port' => $settings['cache']['port'],
+            'password' => $settings['cache']['password'],
         ], [
-            'prefix' => "statsig::${settings['environment']}::"
+            'prefix' => $settings['cache']['prefix'],
         ]);
 
         $this->setRedisCache(new RedisFeatureFlagCache($redisClient));
@@ -122,6 +134,12 @@ class StatsigFeatureFlag implements FeatureFlag
         foreach (self::REQUIRED_SETTINGS as $setting) {
             if (!array_key_exists($setting, $settings)) {
                 throw new InvalidFeatureFlagSettingsException("Missing required setting: $setting");
+            }
+        }
+        
+        foreach (self::REQUIRED_CACHE_SETTINGS as $setting) {
+            if (!array_key_exists($setting, $settings['cache'])) {
+                throw new InvalidFeatureFlagSettingsException("Missing required cache setting: $setting");
             }
         }
     }
