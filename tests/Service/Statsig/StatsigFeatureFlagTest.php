@@ -440,6 +440,18 @@ class StatsigFeatureFlagTest extends TestCase
     /**
      * @test
      */
+    public function isFeatureGateEnabled_converts_identifier_to_lowercase()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => true]));
+
+        $this->statsig->isFeatureGateEnabled('MY-GATE');
+
+        $this->assertEquals('my-gate', $this->httpStub->postCalls[0]['options']['json']['gateName']);
+    }
+
+    /**
+     * @test
+     */
     public function isFeatureGateEnabled_returns_false_when_api_returns_value_false()
     {
         $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => false]));
@@ -470,6 +482,18 @@ class StatsigFeatureFlagTest extends TestCase
         $this->cacheStub->responses[$cacheKey] = true;
 
         $this->assertTrue($this->statsig->enabled('my-flag'));
+        $this->assertEmpty($this->httpStub->postCalls);
+    }
+
+    /**
+     * @test
+     */
+    public function enabled_converts_identifier_to_lowercase()
+    {
+        $cacheKey = $this->statsig->getCacheKey('my-flag', 'user123');
+        $this->cacheStub->responses[$cacheKey] = true;
+
+        $this->assertTrue($this->statsig->enabled('MY-FLAG'));
         $this->assertEmpty($this->httpStub->postCalls);
     }
 
@@ -513,6 +537,16 @@ class StatsigFeatureFlagTest extends TestCase
         $this->assertFalse($this->statsig->exists('flag-three'));
     }
 
+    /**
+     * @test
+     */
+    public function exists_converts_identifier_to_lowercase()
+    {
+        $this->cacheStub->responses[StatsigFeatureFlag::ALL_FEATURE_NAMES_KEY] = ['flag-one', 'flag-two'];
+
+        $this->assertTrue($this->statsig->exists('FLAG-ONE'));
+    }
+
     // -------------------------------------------------------------------------
     // config
     // -------------------------------------------------------------------------
@@ -527,6 +561,18 @@ class StatsigFeatureFlagTest extends TestCase
         $this->cacheStub->responses[StatsigFeatureFlag::ALL_CONFIG_SPECS_KEY] = $configsPayload;
 
         $this->assertEquals($gateConfig, $this->statsig->config('my-flag'));
+    }
+
+    /**
+     * @test
+     */
+    public function config_converts_identifier_to_lowercase()
+    {
+        $gateConfig     = ['name' => 'my-flag', 'enabled' => true, 'rules' => []];
+        $configsPayload = ['feature_gates' => [$gateConfig]];
+        $this->cacheStub->responses[StatsigFeatureFlag::ALL_CONFIG_SPECS_KEY] = $configsPayload;
+
+        $this->assertEquals($gateConfig, $this->statsig->config('MY-FLAG'));
     }
 
     /**

@@ -244,6 +244,7 @@ class StatsigFeatureFlag implements FeatureFlag
      */
     public function enabled(string $featureFlagIdentifier): bool
     {
+        $featureFlagIdentifier = strtolower($featureFlagIdentifier);
         $this->validateInitialization();
 
         $cacheKey = $this->getCacheKey($featureFlagIdentifier, $this->getUser()->getId());
@@ -267,6 +268,7 @@ class StatsigFeatureFlag implements FeatureFlag
      */
     public function isFeatureGateEnabled(string $featureFlagIdentifier): bool
     {
+        $featureFlagIdentifier = strtolower($featureFlagIdentifier);
         $this->validateInitialization();
 
         try {
@@ -300,6 +302,7 @@ class StatsigFeatureFlag implements FeatureFlag
      */
     public function exists(string $featureFlagIdentifier): bool
     {
+        $featureFlagIdentifier = strtolower($featureFlagIdentifier);
         return in_array($featureFlagIdentifier, $this->all(), true);
     }
 
@@ -311,6 +314,7 @@ class StatsigFeatureFlag implements FeatureFlag
      */
     public function config(string $featureFlagIdentifier): array
     {
+        $featureFlagIdentifier = strtolower($featureFlagIdentifier);
         $allConfigs = $this->getAllStatsigConfigs();
 
         $index = array_search(
