@@ -274,7 +274,9 @@ class StatsigFeatureFlag implements FeatureFlag
                 'json' => [
                     'user' => [
                         'userID' => $this->getUser()->getId(),
-                        'statsigEnvironment' => $this->settings['environment'],
+                        'statsigEnvironment' => [
+                            'tier' => $this->settings['environment'],
+                        ],
                     ],
                     'gateName' => $featureFlagIdentifier,
                 ]
