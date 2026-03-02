@@ -434,7 +434,7 @@ class StatsigFeatureFlagTest extends TestCase
         $this->assertEquals('check_gate', $call['uri']);
         $this->assertEquals('my-gate', $call['options']['json']['gateName']);
         $this->assertEquals('user123', $call['options']['json']['user']['userID']);
-        $this->assertEquals('staging', $call['options']['json']['user']['statsigEnvironment']);
+        $this->assertEquals(['tier' => 'staging'], $call['options']['json']['user']['statsigEnvironment']);
     }
 
     /**
