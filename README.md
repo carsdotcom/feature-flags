@@ -69,8 +69,13 @@ try {
     $sdkConfig = [
         'apiKey' => 'API_KEY',
         'environment' => 'production', // 'development', 'staging', or 'production'
-        'redisHost' => 'REDIS_HOST',
-        'redisPort' => 'REDIS_PORT',
+        'cache' => [
+            'scheme' => 'tcp', // 'tcp' or 'tls'
+            'host' => '127.0.0.1',
+            'port' => 6379,
+            'password' => '',
+            'prefix' => 'flags',
+        ]
     ];
     
     // CCID is used for user targeting and segments.
