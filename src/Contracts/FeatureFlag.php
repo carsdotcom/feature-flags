@@ -2,7 +2,6 @@
 
 namespace Carsdotcom\FeatureFlags\Contracts;
 
-use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 
 interface FeatureFlag
@@ -27,32 +26,32 @@ interface FeatureFlag
      *
      * @return array
      */
-    public function all();
+    public function all(): array;
 
     /**
      * Will return true/false if the feature flag is enabled. if the feature flag doesn't exist this function
      * should return false
      *
-     * @param String $featureFlagIdentifier
+     * @param string $featureFlagIdentifier
      * @return bool
      * @throws InvalidFeatureFlagUserException
      */
-    public function enabled($featureFlagIdentifier);
+    public function enabled(string $featureFlagIdentifier): bool;
 
     /**
      * Will return true/false if the feature flag exists
      *
-     * @param String $featureFlagIdentifier
+     * @param string $featureFlagIdentifier
      * @return bool
      */
-    public function exists($featureFlagIdentifier);
+    public function exists(string $featureFlagIdentifier): bool;
 
     /**
      * Will return the decoded json in an array format. If feature flag doesn't exist will return an empty array
      *
-     * @param $featureFlagIdentifier
+     * @param string $featureFlagIdentifier
      * @return array
      * @throws InvalidFeatureFlagUserException
      */
-    public function config($featureFlagIdentifier);
+    public function config(string $featureFlagIdentifier): array;
 }

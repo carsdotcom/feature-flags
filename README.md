@@ -1,17 +1,24 @@
-# Feature Flags for PHP 5.5
-This SDK is designed to work with Split, the platform for controlled rollouts, serving features to your users via the Split feature flag to manage your complete customer experience.
+# Feature Flags for PHP 7.0
+This SDK is designed to work with Split and Statsig.
 
 
 ## Getting started
 
 ### Running Locally
-The repo comes with a PHP 5.5 docker container that includes xdebug and a handful of other nice to have PHP libraries/extensions enabled. 
-To run this locally, the very first thing you would want to do is install the composer dependencies. This is accomplished with run a simple Make command:
+The repo comes with a PHP 7.0 docker container that includes xdebug and a handful of other nice to have PHP libraries/extensions enabled. 
+
+To run this locally, start by building the Docker image:
+```shell
+$ make build
+```
+
+You can then install the Composer dependencies:
+
 ```shell
 $ make install
 ```
 
-Once the composer dependencies have been installed you can run the unit tests with another Make command:  
+Once the composer dependencies have been installed, you can run the unit tests:  
 ```shell
 $ make test
 ```
@@ -48,47 +55,54 @@ try {
 }
 ```
 
-## Split.io
-Below is a simple example that describes the instantiation and most basic usage of our SDK.
-Keep in mind that since PHP does not have the ability to share memory between processes the use of the [split-synchronizer](https://help.split.io/hc/en-us/articles/360019686092-Split-Synchronizer-Proxy) is mandatory for this SDK.
+## Statsig
 
-**IMPORTANT:** The Split SDK has a constraint of only being able to call the factory method once and get a valid return.
-Because of this, we can only call `initializeSettings()` once, any further calls will be ignored.  
+Below is an example of using the SDK for Statsig. Note that in Statsig, "feature flags" are called "feature gates":
 
 ```php
 <?php
-use \Carsdotcom\FeatureFlags\Service\SplitIO\SplitFeatureFlag;
-use \Carsdotcom\FeatureFlags\Service\SplitIO\SplitFeatureFlagUser;
+
+use \Carsdotcom\FeatureFlags\Service\Factory\FeatureFlagFactory;
 
 try {
+    // API keys are set up per environment. Be sure to use the correct apiKey/environment combo.
     $sdkConfig = [
-        'log' => [
-            'adapter' => 'syslog',
-            'level' => 'verbose',
-        ],
+        'apiKey' => 'API_KEY',
+        'environment' => 'production', // 'development', 'staging', or 'production'
         'cache' => [
-            'adapter' => 'predis',
-            'parameters' => [
-                'scheme' => 'tcp',
-                'host' => 'REDIS_HOST',
-                'port' => 'REDIS_PORT',
-                'timeout' => 881,
-            ],
-            'options' => [
-                'prefix' => 'development',
-            ]
-        ],
+            'scheme' => 'tcp', // 'tcp' or 'tls'
+            'host' => '127.0.0.1',
+            'port' => 6379,
+            'password' => '',
+            'prefix' => 'flags',
+        ]
     ];
     
-    $flags = SplitFeatureFlag::getInstance()
-        ->initializeSettings(array_merge(['apiKey' => 'API_KEY', $sdkConfig))
-        ->setUser(new SplitFeatureFlagUser($ccid = '123'));
-       
-    if ($flags->exists('my-new-feature') && $flags->enabled('my-new-feature')) {
-        // flag exists and is turn on for this user
-    else {
-        // flag is either off OR doesn't exist
+    // CCID is used for user targeting and segments.
+    $userId = '123';
+
+    // Use the FeatureFlagFactory for instantiation- not the StatsigFeatureFlag class directly.
+    // If we migrate feature flag providers again, we only have to change the factory.
+    $flags = FeatureFlagFactory::create($sdkConfig, $userId);
+
+    // Check if a feature flag (gate) is enabled for the current user
+    if ($flags->enabled('my-new-feature')) {
+        // Calling $flags->exists() before $flags->enabled() is not needed due to our Statsig implementation.
+        // Doing so adds unnecessary overhead.
+        // Calling $flags->enabled() on a non-existent flag returns false.
     }
+
+    // Check if a feature flag (gate) name exists
+    if ($flags->exists('my-new-feature')) {
+        // ...
+    }
+    
+    // Get all available feature flags (gates) names
+    $allFlags = $flags->all();
+    
+    // Change the user (uncommon use case)
+    // Again, note the use of FeatureFlagFactory instead of the StatsigFeatureFlagUser class.
+    $flags->setUser(FeatureFlagFactory::createUser('some-other-CCID'));
     
 } catch (\Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException $exception) {
     // the user passed was invalid. This could happen if the user identifier wasn't sent during creation

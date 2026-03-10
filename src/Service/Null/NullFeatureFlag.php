@@ -33,7 +33,7 @@ class NullFeatureFlag implements FeatureFlag
     /**
      * @inheritDoc
      */
-    public function all()
+    public function all(): array
     {
         return [];
     }
@@ -41,7 +41,7 @@ class NullFeatureFlag implements FeatureFlag
     /**
      * @inheritDoc
      */
-    public function enabled($featureFlagIdentifier)
+    public function enabled(string $featureFlagIdentifier): bool
     {
         return false;
     }
@@ -49,7 +49,7 @@ class NullFeatureFlag implements FeatureFlag
     /**
      * @inheritDoc
      */
-    public function exists($featureFlagIdentifier)
+    public function exists(string $featureFlagIdentifier): bool
     {
         return false;
     }
@@ -57,7 +57,7 @@ class NullFeatureFlag implements FeatureFlag
     /**
      * @inheritDoc
      */
-    public function config($featureFlagIdentifier)
+    public function config(string $featureFlagIdentifier): array
     {
         return [];
     }

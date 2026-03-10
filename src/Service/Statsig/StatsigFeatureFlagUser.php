@@ -1,10 +1,10 @@
 <?php
 
-namespace Carsdotcom\FeatureFlags\Service\SplitIO;
+namespace Carsdotcom\FeatureFlags\Service\Statsig;
 
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlagUser;
 
-class SplitFeatureFlagUser implements FeatureFlagUser
+class StatsigFeatureFlagUser implements FeatureFlagUser
 {
     /**
      * @var string

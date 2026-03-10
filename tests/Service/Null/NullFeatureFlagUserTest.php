@@ -1,17 +1,16 @@
 <?php
 
-namespace Carsdotcom\FeatureFlags\Tests;
+namespace Carsdotcom\FeatureFlags\Tests\Service\SplitIO\Service\Null;
 
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlagUser;
 use PHPUnit\Framework\TestCase;
 
 class NullFeatureFlagUserTest extends TestCase
 {
-
     /**
      * @test
      */
-    function it_can_set_the_users_identifier()
+    public function it_can_set_the_users_identifier()
     {
         $this->assertEquals('1234', (new NullFeatureFlagUser('1234'))->getId());
 

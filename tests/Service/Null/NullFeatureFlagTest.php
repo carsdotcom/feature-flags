@@ -1,6 +1,6 @@
 <?php
 
-namespace Carsdotcom\FeatureFlags\Tests;
+namespace Carsdotcom\FeatureFlags\Tests\Service\SplitIO\Service\Null\Service\Null;
 
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlag;
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlagUser;
@@ -8,8 +8,9 @@ use PHPUnit\Framework\TestCase;
 
 class NullFeatureFlagTest extends TestCase
 {
+    private $featureFlags;
 
-    function setUp()
+    public function setUp()
     {
         $this->featureFlags = new NullFeatureFlag();
         $this->featureFlags->setUser(new NullFeatureFlagUser('1234'));
@@ -18,7 +19,7 @@ class NullFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_accept_any_user_id()
+    public function it_will_accept_any_user_id()
     {
         $this->featureFlags->setUser(new NullFeatureFlagUser(null));
         $this->assertEquals(null, $this->featureFlags->getUser()->getId(), 'Null value not accept by NullFeatureFlagUser');
@@ -36,7 +37,7 @@ class NullFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_return_an_empty_array_when_all_is_called()
+    public function it_will_return_an_empty_array_when_all_is_called()
     {
         $this->assertEquals([], $this->featureFlags->all());
     }
@@ -44,7 +45,7 @@ class NullFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_always_return_false_when_enabled_called()
+    public function it_will_always_return_false_when_enabled_called()
     {
         $this->assertFalse($this->featureFlags->enabled('foobar'));
     }
@@ -52,7 +53,7 @@ class NullFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_always_return_false_when_exist_called()
+    public function it_will_always_return_false_when_exist_called()
     {
         $this->assertFalse($this->featureFlags->exists('foobar'));
     }
@@ -60,7 +61,7 @@ class NullFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    function it_will_return_empty_array_when_config_is_called()
+    public function it_will_return_empty_array_when_config_is_called()
     {
         $this->assertEquals([], $this->featureFlags->config('foobar'));
     }
