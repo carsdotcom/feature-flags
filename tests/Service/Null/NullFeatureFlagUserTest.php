@@ -1,6 +1,6 @@
 <?php
 
-namespace Carsdotcom\FeatureFlags\Tests\Service\SplitIO\Service\Null;
+namespace Carsdotcom\FeatureFlags\Tests\Service\Null;
 
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlagUser;
 use PHPUnit\Framework\TestCase;
