@@ -105,12 +105,20 @@ class StatsigFeatureFlag implements FeatureFlag
 
         $this->settings = $settings;
 
-        $redisClient = new PredisClient([
+        $redisConfig = [
             'scheme' => $settings['cache']['scheme'],
             'host' => $settings['cache']['host'],
             'port' => $settings['cache']['port'],
             'password' => $settings['cache']['password'],
-        ], [
+        ];
+
+        if ($settings['cache']['scheme'] === 'tls') {
+            $redisConfig['ssl'] = [
+                'crypto_type' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
+            ];
+        }
+
+        $redisClient = new PredisClient($redisConfig, [
             'prefix' => $settings['cache']['prefix'],
         ]);
 
