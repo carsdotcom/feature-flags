@@ -585,4 +585,77 @@ class StatsigFeatureFlagTest extends TestCase
 
         $this->assertEquals([], $this->statsig->config('non-existent-flag'));
     }
+
+    // -------------------------------------------------------------------------
+    // getDynamicConfig
+    // -------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_returns_cached_value_without_hitting_the_api()
+    {
+        $configValue = ['color' => 'blue', 'size' => 42];
+        $cacheKey = $this->statsig->getCacheKey('my-config', 'user123');
+        $this->cacheStub->responses[$cacheKey] = $configValue;
+
+        $this->assertEquals($configValue, $this->statsig->getDynamicConfig('my-config'));
+        $this->assertEmpty($this->httpStub->postCalls);
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_sends_correct_payload_and_caches_the_result()
+    {
+        $configValue = ['color' => 'blue', 'size' => 42];
+        $cacheKey = $this->statsig->getCacheKey('my-config', 'user123');
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => $configValue]));
+
+        $result = $this->statsig->getDynamicConfig('my-config');
+
+        $this->assertEquals($configValue, $result);
+        $this->assertCount(1, $this->httpStub->postCalls);
+        $call = $this->httpStub->postCalls[0];
+        $this->assertEquals('get_config', $call['uri']);
+        $this->assertEquals('my-config', $call['options']['json']['configName']);
+        $this->assertEquals('user123', $call['options']['json']['user']['userID']);
+        $this->assertEquals(['tier' => 'staging'], $call['options']['json']['user']['statsigEnvironment']);
+        $this->assertCount(1, $this->cacheStub->setCalls);
+        $this->assertEquals($cacheKey, $this->cacheStub->setCalls[0]['key']);
+        $this->assertEquals($configValue, $this->cacheStub->setCalls[0]['value']);
+        $this->assertEquals(StatsigFeatureFlag::DEFAULT_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_converts_identifier_to_lowercase()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => []]));
+
+        $this->statsig->getDynamicConfig('MY-CONFIG');
+
+        $this->assertEquals('my-config', $this->httpStub->postCalls[0]['options']['json']['configName']);
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_returns_empty_array_when_api_response_has_no_value_key()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode([]));
+
+        $this->assertEquals([], $this->statsig->getDynamicConfig('my-config'));
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_returns_empty_array_when_exception_occurs()
+    {
+        $this->httpStub->shouldThrow = true;
+
+        $this->assertEquals([], $this->statsig->getDynamicConfig('my-config'));
+    }
 }

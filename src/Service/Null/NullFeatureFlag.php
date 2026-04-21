@@ -61,4 +61,12 @@ class NullFeatureFlag implements FeatureFlag
     {
         return [];
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDynamicConfig(string $identifier): array
+    {
+        return [];
+    }
 }

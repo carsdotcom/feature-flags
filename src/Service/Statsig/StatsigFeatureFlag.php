@@ -315,6 +315,7 @@ class StatsigFeatureFlag implements FeatureFlag
     }
 
     /**
+     * @deprecated Use getDynamicConfig instead.
      * @param string $featureFlagIdentifier
      * @return array
      * @throws InvalidFeatureFlagSettingsException
@@ -332,6 +333,48 @@ class StatsigFeatureFlag implements FeatureFlag
         );
 
         return $index !== false ? $allConfigs['feature_gates'][$index] : [];
+    }
+
+    /**
+     * @param string $identifier
+     * @return array
+     * @throws InvalidFeatureFlagSettingsException
+     * @throws InvalidFeatureFlagUserException
+     */
+    public function getDynamicConfig(string $identifier): array
+    {
+        $identifier = strtolower($identifier);
+        $this->validateInitialization();
+
+        $cacheKey = $this->getCacheKey($identifier, $this->getUser()->getId());
+        $cachedValue = $this->redisCache->get($cacheKey);
+        if ($cachedValue !== null) {
+            return $cachedValue;
+        }
+
+        try {
+            $response = $this->httpClient->post('get_config', [
+                'json' => [
+                    'user' => [
+                        'userID' => $this->getUser()->getId(),
+                        'statsigEnvironment' => [
+                            'tier' => $this->settings['environment'],
+                        ],
+                    ],
+                    'configName' => $identifier,
+                ]
+            ]);
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            $result = $data['value'] ?? [];
+
+            $this->redisCache->set($cacheKey, $result, self::DEFAULT_TTL);
+
+            return $result;
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 
     /**
