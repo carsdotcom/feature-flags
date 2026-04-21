@@ -315,6 +315,7 @@ class StatsigFeatureFlag implements FeatureFlag
     }
 
     /**
+     * @deprecated Use getDynamicConfig instead.
      * @param string $featureFlagIdentifier
      * @return array
      * @throws InvalidFeatureFlagSettingsException
@@ -345,6 +346,12 @@ class StatsigFeatureFlag implements FeatureFlag
         $identifier = strtolower($identifier);
         $this->validateInitialization();
 
+        $cacheKey = $this->getCacheKey($identifier, $this->getUser()->getId());
+        $cachedValue = $this->redisCache->get($cacheKey);
+        if ($cachedValue !== null) {
+            return $cachedValue;
+        }
+
         try {
             $response = $this->httpClient->post('get_config', [
                 'json' => [
@@ -360,7 +367,11 @@ class StatsigFeatureFlag implements FeatureFlag
 
             $data = json_decode($response->getBody()->getContents(), true);
 
-            return $data['value'] ?? [];
+            $result = $data['value'] ?? [];
+
+            $this->redisCache->set($cacheKey, $result, self::DEFAULT_TTL);
+
+            return $result;
         } catch (Throwable $e) {
             return [];
         }

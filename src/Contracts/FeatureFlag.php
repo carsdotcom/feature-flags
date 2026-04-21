@@ -47,6 +47,8 @@ interface FeatureFlag
     public function exists(string $featureFlagIdentifier): bool;
 
     /**
+     * @deprecated Use getDynamicConfig instead.
+     *
      * Will return the decoded json in an array format. If feature flag doesn't exist will return an empty array
      *
      * @param string $featureFlagIdentifier
