@@ -593,9 +593,23 @@ class StatsigFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    public function getDynamicConfig_sends_correct_payload_and_returns_array()
+    public function getDynamicConfig_returns_cached_value_without_hitting_the_api()
     {
         $configValue = ['color' => 'blue', 'size' => 42];
+        $cacheKey = $this->statsig->getCacheKey('my-config', 'user123');
+        $this->cacheStub->responses[$cacheKey] = $configValue;
+
+        $this->assertEquals($configValue, $this->statsig->getDynamicConfig('my-config'));
+        $this->assertEmpty($this->httpStub->postCalls);
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_sends_correct_payload_and_caches_the_result()
+    {
+        $configValue = ['color' => 'blue', 'size' => 42];
+        $cacheKey = $this->statsig->getCacheKey('my-config', 'user123');
         $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => $configValue]));
 
         $result = $this->statsig->getDynamicConfig('my-config');
@@ -607,6 +621,10 @@ class StatsigFeatureFlagTest extends TestCase
         $this->assertEquals('my-config', $call['options']['json']['configName']);
         $this->assertEquals('user123', $call['options']['json']['user']['userID']);
         $this->assertEquals(['tier' => 'staging'], $call['options']['json']['user']['statsigEnvironment']);
+        $this->assertCount(1, $this->cacheStub->setCalls);
+        $this->assertEquals($cacheKey, $this->cacheStub->setCalls[0]['key']);
+        $this->assertEquals($configValue, $this->cacheStub->setCalls[0]['value']);
+        $this->assertEquals(StatsigFeatureFlag::DEFAULT_TTL, $this->cacheStub->setCalls[0]['ttl']);
     }
 
     /**
