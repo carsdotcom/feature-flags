@@ -335,6 +335,38 @@ class StatsigFeatureFlag implements FeatureFlag
     }
 
     /**
+     * @param string $identifier
+     * @return array
+     * @throws InvalidFeatureFlagSettingsException
+     * @throws InvalidFeatureFlagUserException
+     */
+    public function getDynamicConfig(string $identifier): array
+    {
+        $identifier = strtolower($identifier);
+        $this->validateInitialization();
+
+        try {
+            $response = $this->httpClient->post('get_config', [
+                'json' => [
+                    'user' => [
+                        'userID' => $this->getUser()->getId(),
+                        'statsigEnvironment' => [
+                            'tier' => $this->settings['environment'],
+                        ],
+                    ],
+                    'configName' => $identifier,
+                ]
+            ]);
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            return $data['value'] ?? [];
+        } catch (Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
      * @param string $gateName
      * @param string $userId
      * @return string

@@ -54,4 +54,11 @@ interface FeatureFlag
      * @throws InvalidFeatureFlagUserException
      */
     public function config(string $featureFlagIdentifier): array;
+
+    /**
+     * @param string $identifier
+     * @return array
+     * @throws InvalidFeatureFlagUserException
+     */
+    public function getDynamicConfig(string $identifier): array;
 }

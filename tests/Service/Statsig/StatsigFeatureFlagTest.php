@@ -585,4 +585,59 @@ class StatsigFeatureFlagTest extends TestCase
 
         $this->assertEquals([], $this->statsig->config('non-existent-flag'));
     }
+
+    // -------------------------------------------------------------------------
+    // getDynamicConfig
+    // -------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_sends_correct_payload_and_returns_array()
+    {
+        $configValue = ['color' => 'blue', 'size' => 42];
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => $configValue]));
+
+        $result = $this->statsig->getDynamicConfig('my-config');
+
+        $this->assertEquals($configValue, $result);
+        $this->assertCount(1, $this->httpStub->postCalls);
+        $call = $this->httpStub->postCalls[0];
+        $this->assertEquals('get_config', $call['uri']);
+        $this->assertEquals('my-config', $call['options']['json']['configName']);
+        $this->assertEquals('user123', $call['options']['json']['user']['userID']);
+        $this->assertEquals(['tier' => 'staging'], $call['options']['json']['user']['statsigEnvironment']);
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_converts_identifier_to_lowercase()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => []]));
+
+        $this->statsig->getDynamicConfig('MY-CONFIG');
+
+        $this->assertEquals('my-config', $this->httpStub->postCalls[0]['options']['json']['configName']);
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_returns_empty_array_when_api_response_has_no_value_key()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode([]));
+
+        $this->assertEquals([], $this->statsig->getDynamicConfig('my-config'));
+    }
+
+    /**
+     * @test
+     */
+    public function getDynamicConfig_returns_empty_array_when_exception_occurs()
+    {
+        $this->httpStub->shouldThrow = true;
+
+        $this->assertEquals([], $this->statsig->getDynamicConfig('my-config'));
+    }
 }

@@ -65,4 +65,12 @@ class NullFeatureFlagTest extends TestCase
     {
         $this->assertEquals([], $this->featureFlags->config('foobar'));
     }
+
+    /**
+     * @test
+     */
+    public function it_will_return_empty_array_when_getDynamicConfig_is_called()
+    {
+        $this->assertEquals([], $this->featureFlags->getDynamicConfig('foobar'));
+    }
 }
