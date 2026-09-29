@@ -64,6 +64,8 @@ class StatsigTestHttpClient extends \GuzzleHttp\Client
     /** @var bool When true, get() throws to simulate a network failure */
     public $shouldThrow = false;
 
+    public $postException;
+
     public function __construct() {}
 
     public function get($uri, array $options = [])
@@ -78,6 +80,9 @@ class StatsigTestHttpClient extends \GuzzleHttp\Client
     public function post($uri, array $options = [])
     {
         $this->postCalls[] = ['uri' => $uri, 'options' => $options];
+        if ($this->postException) {
+            throw $this->postException;
+        }
         return array_shift($this->responses) ?: new Response(200, [], '{}');
     }
 }
@@ -469,6 +474,16 @@ class StatsigFeatureFlagTest extends TestCase
         $this->assertFalse($this->statsig->isFeatureGateEnabled('my-gate'));
     }
 
+    /**
+     * @test
+     */
+    public function isFeatureGateEnabled_limits_the_statsig_request_to_five_seconds()
+    {
+        $this->statsig->isFeatureGateEnabled('my-gate');
+
+        $this->assertSame(5, $this->httpStub->postCalls[0]['options']['timeout']);
+    }
+
     // -------------------------------------------------------------------------
     // enabled
     // -------------------------------------------------------------------------
@@ -511,6 +526,21 @@ class StatsigFeatureFlagTest extends TestCase
         $this->assertEquals($cacheKey, $this->cacheStub->setCalls[0]['key']);
         $this->assertEquals(true, $this->cacheStub->setCalls[0]['value']);
         $this->assertEquals(StatsigFeatureFlag::DEFAULT_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    /**
+     * @test
+     */
+    public function enabled_returns_off_and_caches_it_when_statsig_times_out()
+    {
+        $this->httpStub->postException = new \GuzzleHttp\Exception\ConnectException(
+            'Statsig timed out',
+            new \GuzzleHttp\Psr7\Request('POST', 'check_gate')
+        );
+
+        $this->assertFalse($this->statsig->enabled('my-flag'));
+        $this->assertSame(5, $this->httpStub->postCalls[0]['options']['timeout']);
+        $this->assertFalse($this->cacheStub->setCalls[0]['value']);
     }
 
     // -------------------------------------------------------------------------

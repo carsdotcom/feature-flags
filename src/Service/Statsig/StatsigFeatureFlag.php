@@ -18,6 +18,8 @@ class StatsigFeatureFlag implements FeatureFlag
      */
     const DEFAULT_TTL = 300;
 
+    const GATE_REQUEST_TIMEOUT = 5;
+
     /**
      * @var string
      */
@@ -281,6 +283,7 @@ class StatsigFeatureFlag implements FeatureFlag
 
         try {
             $response = $this->httpClient->post('check_gate', [
+                'timeout' => self::GATE_REQUEST_TIMEOUT,
                 'json' => [
                     'user' => [
                         'userID' => $this->getUser()->getId(),
