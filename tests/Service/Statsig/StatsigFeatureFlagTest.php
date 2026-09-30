@@ -263,7 +263,7 @@ class StatsigFeatureFlagTest extends TestCase
 
     public function invalidGateTimeouts(): array
     {
-        return [[0], [-1], ['unlimited']];
+        return [[0], [-1], ['unlimited'], [new \stdClass()]];
     }
 
     // -------------------------------------------------------------------------
