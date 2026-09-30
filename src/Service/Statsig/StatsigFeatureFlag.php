@@ -153,8 +153,10 @@ class StatsigFeatureFlag implements FeatureFlag
             }
         }
 
-        if (array_key_exists('gateTimeout', $settings) &&
-            !$this->isValidGateTimeout($settings['gateTimeout'])) {
+        if (
+            array_key_exists('gateTimeout', $settings)
+            && !$this->isValidGateTimeout($settings['gateTimeout'])
+        ) {
             throw new InvalidFeatureFlagSettingsException('gateTimeout must be a positive number of seconds');
         }
     }
