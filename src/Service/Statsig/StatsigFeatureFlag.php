@@ -153,17 +153,20 @@ class StatsigFeatureFlag implements FeatureFlag
             }
         }
 
-        if (array_key_exists('gateTimeout', $settings)) {
-            $timeout = $settings['gateTimeout'];
-            if (!is_numeric($timeout)) {
-                throw new InvalidFeatureFlagSettingsException('gateTimeout must be a positive number of seconds');
-            }
-
-            $timeout = (float) $timeout;
-            if ($timeout <= 0 || !is_finite($timeout)) {
-                throw new InvalidFeatureFlagSettingsException('gateTimeout must be a positive number of seconds');
-            }
+        if (array_key_exists('gateTimeout', $settings) &&
+            !$this->isValidGateTimeout($settings['gateTimeout'])) {
+            throw new InvalidFeatureFlagSettingsException('gateTimeout must be a positive number of seconds');
         }
+    }
+
+    private function isValidGateTimeout($timeout): bool
+    {
+        if (!is_numeric($timeout)) {
+            return false;
+        }
+
+        $seconds = (float) $timeout;
+        return $seconds > 0 && is_finite($seconds);
     }
 
     /**
