@@ -1,6 +1,6 @@
 # Feature Flags for PHP
 
-This shared PHP library evaluates Statsig feature gates and dynamic configs. The Websites inventory plugin, inventory-processor, and inventory-routing-api consume it as a Composer dependency. Gate and dynamic-config results are cached in Redis.
+This shared PHP library evaluates Statsig feature gates and dynamic configs. It is used as a dependency by several projects. Gate and dynamic-config results are cached in Redis.
 
 The Split implementation was removed in March 2026 and is no longer included. Composer supports PHP 7 and 8; the local test container uses PHP 7.0.
 
