@@ -102,8 +102,13 @@ class StatsigFeatureFlagTest extends TestCase
     {
         $this->resetSingleton();
 
+        $this->initializeStatsig();
+    }
+
+    private function initializeStatsig(array $options = [])
+    {
         $this->statsig = StatsigFeatureFlag::getInstance();
-        $this->statsig->initializeSettings([
+        $this->statsig->initializeSettings(array_merge([
             'apiKey'      => 'test-api-key',
             'environment' => 'staging',
             'cache'       => [
@@ -113,7 +118,7 @@ class StatsigFeatureFlagTest extends TestCase
                 'password' => null,
                 'prefix'   => 'test:',
             ],
-        ]);
+        ], $options));
 
         $this->cacheStub = new StatsigTestCache();
         $this->httpStub  = new StatsigTestHttpClient();
@@ -233,6 +238,32 @@ class StatsigFeatureFlagTest extends TestCase
             ],
         ]);
         $this->assertTrue(true);
+    }
+
+    /**
+     * @test
+     * @dataProvider invalidGateTimeouts
+     * @expectedException \Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException
+     */
+    public function validateSettings_rejects_timeouts_that_cannot_bound_a_request($timeout)
+    {
+        $this->statsig->validateSettings([
+            'apiKey' => 'test-key',
+            'environment' => 'staging',
+            'cache' => [
+                'scheme' => 'tcp',
+                'host' => 'localhost',
+                'port' => 6379,
+                'password' => null,
+                'prefix' => 'test:',
+            ],
+            'gateTimeout' => $timeout,
+        ]);
+    }
+
+    public function invalidGateTimeouts(): array
+    {
+        return [[0], [-1], ['unlimited']];
     }
 
     // -------------------------------------------------------------------------
@@ -482,6 +513,32 @@ class StatsigFeatureFlagTest extends TestCase
         $this->statsig->isFeatureGateEnabled('my-gate');
 
         $this->assertSame(5, $this->httpStub->postCalls[0]['options']['timeout']);
+    }
+
+    /**
+     * @test
+     */
+    public function isFeatureGateEnabled_uses_a_configured_timeout()
+    {
+        $this->resetSingleton();
+        $this->initializeStatsig(['gateTimeout' => 1]);
+
+        $this->statsig->isFeatureGateEnabled('my-gate');
+
+        $this->assertSame(1, $this->httpStub->postCalls[0]['options']['timeout']);
+    }
+
+    /**
+     * @test
+     */
+    public function isFeatureGateEnabled_accepts_fractional_seconds()
+    {
+        $this->resetSingleton();
+        $this->initializeStatsig(['gateTimeout' => 0.5]);
+
+        $this->statsig->isFeatureGateEnabled('my-gate');
+
+        $this->assertSame(0.5, $this->httpStub->postCalls[0]['options']['timeout']);
     }
 
     // -------------------------------------------------------------------------
