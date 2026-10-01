@@ -1,5 +1,8 @@
-# Feature Flags for PHP 7.0
-This SDK is designed to work with Split and Statsig.
+# Feature Flags for PHP
+
+This shared PHP library evaluates Statsig feature gates and dynamic configs. Gate and dynamic-config results are cached in Redis.
+
+The Split implementation was removed in March 2026 and is no longer included. Composer supports PHP 7 and 8; the local test container uses PHP 7.0.
 
 
 ## Getting started
@@ -59,6 +62,8 @@ try {
 
 Below is an example of using the SDK for Statsig. Note that in Statsig, "feature flags" are called "feature gates":
 
+Uncached gate evaluations use a five-second HTTP timeout by default. Set `gateTimeout` to a positive number of seconds (including fractions such as `0.5`) in the SDK config to use a different limit for a consumer. Other Statsig API requests are not affected.
+
 ```php
 <?php
 
@@ -69,6 +74,7 @@ try {
     $sdkConfig = [
         'apiKey' => 'API_KEY',
         'environment' => 'production', // 'development', 'staging', or 'production'
+        'gateTimeout' => 1,
         'cache' => [
             'scheme' => 'tcp', // 'tcp' or 'tls'
             'host' => '127.0.0.1',

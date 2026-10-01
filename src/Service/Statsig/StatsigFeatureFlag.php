@@ -18,6 +18,8 @@ class StatsigFeatureFlag implements FeatureFlag
      */
     const DEFAULT_TTL = 300;
 
+    const DEFAULT_GATE_REQUEST_TIMEOUT = 5;
+
     /**
      * @var string
      */
@@ -150,6 +152,23 @@ class StatsigFeatureFlag implements FeatureFlag
                 throw new InvalidFeatureFlagSettingsException("Missing required cache setting: $setting");
             }
         }
+
+        if (
+            array_key_exists('gateTimeout', $settings)
+            && !$this->isValidGateTimeout($settings['gateTimeout'])
+        ) {
+            throw new InvalidFeatureFlagSettingsException('gateTimeout must be a positive number of seconds');
+        }
+    }
+
+    private function isValidGateTimeout($timeout): bool
+    {
+        if (!is_numeric($timeout)) {
+            return false;
+        }
+
+        $seconds = (float) $timeout;
+        return $seconds > 0 && is_finite($seconds);
     }
 
     /**
@@ -281,6 +300,7 @@ class StatsigFeatureFlag implements FeatureFlag
 
         try {
             $response = $this->httpClient->post('check_gate', [
+                'timeout' => $this->settings['gateTimeout'] ?? self::DEFAULT_GATE_REQUEST_TIMEOUT,
                 'json' => [
                     'user' => [
                         'userID' => $this->getUser()->getId(),
