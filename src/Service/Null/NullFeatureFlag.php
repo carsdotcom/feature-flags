@@ -4,10 +4,9 @@ namespace Carsdotcom\FeatureFlags\Service\Null;
 
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlag;
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlagUser;
-use Carsdotcom\FeatureFlags\Contracts\GateState;
-use Carsdotcom\FeatureFlags\Contracts\GateStateReader;
+use Carsdotcom\FeatureFlags\Contracts\FlagState;
 
-class NullFeatureFlag implements FeatureFlag, GateStateReader
+class NullFeatureFlag implements FeatureFlag
 {
     /**
      * @var FeatureFlagUser
@@ -49,13 +48,13 @@ class NullFeatureFlag implements FeatureFlag, GateStateReader
     }
 
     /**
-     * Without a provider no gate can be evaluated, so callers that act on GateState::OFF never act on this one.
+     * Without a provider no flag can be evaluated, so callers that act on FlagState::OFF never act on this one.
      *
      * @inheritDoc
      */
-    public function gateState(string $featureFlagIdentifier): string
+    public function getFlagState(string $featureFlagIdentifier): string
     {
-        return GateState::UNAVAILABLE;
+        return FlagState::UNAVAILABLE;
     }
 
     /**

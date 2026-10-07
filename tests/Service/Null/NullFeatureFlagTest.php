@@ -2,7 +2,7 @@
 
 namespace Carsdotcom\FeatureFlags\Tests\Service\Null;
 
-use Carsdotcom\FeatureFlags\Contracts\GateState;
+use Carsdotcom\FeatureFlags\Contracts\FlagState;
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlag;
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlagUser;
 use PHPUnit\Framework\TestCase;
@@ -54,9 +54,9 @@ class NullFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    public function itWillAlwaysReturnUnavailableWhenGateStateCalled()
+    public function itWillAlwaysReturnUnavailableWhenGetFlagStateCalled()
     {
-        $this->assertSame(GateState::UNAVAILABLE, $this->featureFlags->gateState('foobar'));
+        $this->assertSame(FlagState::UNAVAILABLE, $this->featureFlags->getFlagState('foobar'));
     }
 
     /**
