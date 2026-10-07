@@ -4,8 +4,10 @@ namespace Carsdotcom\FeatureFlags\Service\Null;
 
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlag;
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlagUser;
+use Carsdotcom\FeatureFlags\Contracts\GateState;
+use Carsdotcom\FeatureFlags\Contracts\GateStateReader;
 
-class NullFeatureFlag implements FeatureFlag
+class NullFeatureFlag implements FeatureFlag, GateStateReader
 {
     /**
      * @var FeatureFlagUser
@@ -44,6 +46,14 @@ class NullFeatureFlag implements FeatureFlag
     public function enabled(string $featureFlagIdentifier): bool
     {
         return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function gateState(string $featureFlagIdentifier): string
+    {
+        return GateState::OFF;
     }
 
     /**

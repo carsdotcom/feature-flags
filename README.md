@@ -117,6 +117,34 @@ try {
 }
 ```
 
+### Telling "off" apart from "could not be evaluated"
+
+`enabled()` returns `false` both when a gate is off and when Statsig could not be asked (timeout, network error, non-200 response, or a body without a boolean `value`). That is the right answer for hiding a feature, but not for code that deletes data when a gate is off. Such callers use `gateState()`, which returns one of three `GateState` constants:
+
+```php
+use \Carsdotcom\FeatureFlags\Contracts\GateState;
+use \Carsdotcom\FeatureFlags\Contracts\GateStateReader;
+
+if ($flags instanceof GateStateReader) {
+    switch ($flags->gateState('my-new-feature')) {
+        case GateState::ON:
+            // the gate is on for this user
+            break;
+        case GateState::OFF:
+            // Statsig answered that the gate is off (or the gate does not exist)
+            break;
+        case GateState::UNAVAILABLE:
+            // the gate could not be evaluated; do not treat it as off
+            break;
+    }
+}
+```
+
+Caching:
+- An answer from Statsig (on or off) is cached for 5 minutes, and a failed check for 1 minute, so the next call after that asks Statsig again. This applies to `enabled()` and `gateState()`.
+- `gateState()` results are cached under their own keys (`gate_state::<gate>::<user>`). The `enabled()` keys keep holding only booleans, so consumers on older versions of this library sharing the same cache are not affected.
+- If the cache cannot be read or written, `gateState()` asks Statsig directly instead of failing.
+
 ## Null Feature Flag
 This service will **always** return as if there are no feature flags enabled/exist and never throw any exceptions.
 
@@ -137,6 +165,9 @@ $flags->exists('foobar');
 
 // will always return false
 $flags->enabled('foobar');
+
+// will always return GateState::OFF
+$flags->gateState('foobar');
 
 // will always return en empty array
 $flags->config('foobar');

@@ -2,6 +2,7 @@
 
 namespace Carsdotcom\FeatureFlags\Tests\Service\Statsig;
 
+use Carsdotcom\FeatureFlags\Contracts\GateState;
 use Carsdotcom\FeatureFlags\Service\Redis\RedisFeatureFlagCache;
 use Carsdotcom\FeatureFlags\Service\Statsig\StatsigFeatureFlag;
 use Carsdotcom\FeatureFlags\Service\Statsig\StatsigFeatureFlagUser;
@@ -26,6 +27,9 @@ class StatsigTestCache extends RedisFeatureFlagCache
     /** @var bool When true, get() throws to simulate a cache failure */
     public $shouldThrow = false;
 
+    /** @var bool When true, set() throws to simulate a cache failure */
+    public $setShouldThrow = false;
+
     public function __construct() {}
 
     public function get(string $key)
@@ -38,6 +42,9 @@ class StatsigTestCache extends RedisFeatureFlagCache
 
     public function set(string $key, $value, int $ttl = null)
     {
+        if ($this->setShouldThrow) {
+            throw new \RuntimeException('Forced cache exception');
+        }
         $this->setCalls[] = ['key' => $key, 'value' => $value, 'ttl' => $ttl];
     }
 
@@ -588,7 +595,7 @@ class StatsigFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    public function enabled_returns_off_and_caches_it_when_statsig_times_out()
+    public function enabled_returns_off_and_caches_it_for_one_minute_when_statsig_times_out()
     {
         $this->httpStub->postException = new \GuzzleHttp\Exception\ConnectException(
             'Statsig timed out',
@@ -598,6 +605,218 @@ class StatsigFeatureFlagTest extends TestCase
         $this->assertFalse($this->statsig->enabled('my-flag'));
         $this->assertSame(5, $this->httpStub->postCalls[0]['options']['timeout']);
         $this->assertFalse($this->cacheStub->setCalls[0]['value']);
+        $this->assertSame(StatsigFeatureFlag::UNAVAILABLE_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    /**
+     * @test
+     * @dataProvider failedGateResponses
+     */
+    public function enabled_returns_off_for_every_failure_and_caches_it_for_one_minute($response, $exception)
+    {
+        $this->givenStatsigAnswers($response, $exception);
+
+        $this->assertFalse($this->statsig->enabled('my-flag'));
+        $this->assertSame(false, $this->cacheStub->setCalls[0]['value']);
+        $this->assertSame(StatsigFeatureFlag::UNAVAILABLE_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    /**
+     * @test
+     */
+    public function enabled_caches_a_real_off_for_the_default_ttl()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => false]));
+
+        $this->assertFalse($this->statsig->enabled('my-flag'));
+        $this->assertSame(StatsigFeatureFlag::DEFAULT_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    /**
+     * @test
+     */
+    public function enabled_keeps_its_boolean_cache_key_apart_from_gateState()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => true]));
+
+        $this->statsig->enabled('my-flag');
+
+        $this->assertSame($this->statsig->getCacheKey('my-flag', 'user123'), $this->cacheStub->setCalls[0]['key']);
+        $this->assertSame(true, $this->cacheStub->setCalls[0]['value']);
+    }
+
+    // -------------------------------------------------------------------------
+    // gateState
+    // -------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    public function gateState_returns_on_and_caches_it_for_the_default_ttl()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => true]));
+
+        $this->assertSame(GateState::ON, $this->statsig->gateState('my-flag'));
+        $this->assertCount(1, $this->cacheStub->setCalls);
+        $this->assertSame(
+            $this->statsig->getGateStateCacheKey('my-flag', 'user123'),
+            $this->cacheStub->setCalls[0]['key']
+        );
+        $this->assertSame(GateState::ON, $this->cacheStub->setCalls[0]['value']);
+        $this->assertSame(StatsigFeatureFlag::DEFAULT_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    /**
+     * @test
+     */
+    public function gateState_returns_off_and_caches_it_for_the_default_ttl()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => false]));
+
+        $this->assertSame(GateState::OFF, $this->statsig->gateState('my-flag'));
+        $this->assertSame(GateState::OFF, $this->cacheStub->setCalls[0]['value']);
+        $this->assertSame(StatsigFeatureFlag::DEFAULT_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    /**
+     * @test
+     */
+    public function gateState_returns_off_for_a_gate_statsig_does_not_know()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode([
+            'name' => 'my-fake-gate',
+            'value' => false,
+            'rule_id' => null,
+            'group_name' => null,
+        ]));
+
+        $this->assertSame(GateState::OFF, $this->statsig->gateState('my-fake-gate'));
+    }
+
+    /**
+     * @test
+     * @dataProvider failedGateResponses
+     */
+    public function gateState_returns_unavailable_for_every_failure_and_caches_it_for_one_minute($response, $exception)
+    {
+        $this->givenStatsigAnswers($response, $exception);
+
+        $this->assertSame(GateState::UNAVAILABLE, $this->statsig->gateState('my-flag'));
+        $this->assertSame(GateState::UNAVAILABLE, $this->cacheStub->setCalls[0]['value']);
+        $this->assertSame(StatsigFeatureFlag::UNAVAILABLE_TTL, $this->cacheStub->setCalls[0]['ttl']);
+    }
+
+    public function failedGateResponses(): array
+    {
+        $request = new \GuzzleHttp\Psr7\Request('POST', 'check_gate');
+
+        return [
+            'timeout' => [null, new \GuzzleHttp\Exception\ConnectException('Operation timed out', $request)],
+            'network error' => [null, new \GuzzleHttp\Exception\RequestException('Connection reset', $request)],
+            'error response thrown by Guzzle' => [null, new \GuzzleHttp\Exception\ServerException(
+                'Server error',
+                $request,
+                new Response(503)
+            )],
+            'error response returned' => [new Response(500, [], json_encode(['value' => false])), null],
+            'non-200 success response' => [new Response(204), null],
+            'invalid JSON' => [new Response(200, [], '<html>Bad gateway</html>'), null],
+            'JSON without value' => [new Response(200, [], json_encode(['name' => 'my-flag'])), null],
+            'non-boolean value' => [new Response(200, [], json_encode(['value' => 'true'])), null],
+            'JSON that is not an object' => [new Response(200, [], 'true'), null],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function gateState_returns_a_cached_state_without_hitting_the_api()
+    {
+        $cacheKey = $this->statsig->getGateStateCacheKey('my-flag', 'user123');
+        $this->cacheStub->responses[$cacheKey] = GateState::UNAVAILABLE;
+
+        $this->assertSame(GateState::UNAVAILABLE, $this->statsig->gateState('my-flag'));
+        $this->assertEmpty($this->httpStub->postCalls);
+    }
+
+    /**
+     * @test
+     */
+    public function gateState_ignores_an_unknown_cached_value_and_asks_statsig()
+    {
+        $cacheKey = $this->statsig->getGateStateCacheKey('my-flag', 'user123');
+        $this->cacheStub->responses[$cacheKey] = true;
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => false]));
+
+        $this->assertSame(GateState::OFF, $this->statsig->gateState('my-flag'));
+        $this->assertCount(1, $this->httpStub->postCalls);
+    }
+
+    /**
+     * @test
+     */
+    public function gateState_does_not_read_the_boolean_cache_of_enabled()
+    {
+        $this->cacheStub->responses[$this->statsig->getCacheKey('my-flag', 'user123')] = false;
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => true]));
+
+        $this->assertSame(GateState::ON, $this->statsig->gateState('my-flag'));
+    }
+
+    /**
+     * @test
+     */
+    public function gateState_asks_statsig_when_the_cache_cannot_be_read_or_written()
+    {
+        $this->cacheStub->shouldThrow = true;
+        $this->cacheStub->setShouldThrow = true;
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => false]));
+
+        $this->assertSame(GateState::OFF, $this->statsig->gateState('my-flag'));
+        $this->assertCount(1, $this->httpStub->postCalls);
+    }
+
+    /**
+     * @test
+     */
+    public function gateState_converts_identifier_to_lowercase()
+    {
+        $this->httpStub->responses[] = new Response(200, [], json_encode(['value' => true]));
+
+        $this->statsig->gateState('MY-FLAG');
+
+        $this->assertSame('my-flag', $this->httpStub->postCalls[0]['options']['json']['gateName']);
+        $this->assertSame(
+            $this->statsig->getGateStateCacheKey('my-flag', 'user123'),
+            $this->cacheStub->setCalls[0]['key']
+        );
+    }
+
+    /**
+     * @test
+     * @expectedException \Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException
+     */
+    public function gateState_throws_when_not_initialized()
+    {
+        $this->resetSingleton();
+        StatsigFeatureFlag::getInstance()->gateState('my-flag');
+    }
+
+    /**
+     * @test
+     */
+    public function getGateStateCacheKey_prefixes_gate_and_user()
+    {
+        $this->assertSame('gate_state::my-flag::user123', $this->statsig->getGateStateCacheKey('my-flag', 'user123'));
+    }
+
+    private function givenStatsigAnswers($response, $exception)
+    {
+        if ($exception !== null) {
+            $this->httpStub->postException = $exception;
+        } else {
+            $this->httpStub->responses[] = $response;
+        }
     }
 
     // -------------------------------------------------------------------------
