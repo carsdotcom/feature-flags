@@ -54,7 +54,7 @@ class NullFeatureFlagTest extends TestCase
     /**
      * @test
      */
-    public function it_will_always_return_off_when_gateState_called()
+    public function itWillAlwaysReturnOffWhenGateStateCalled()
     {
         $this->assertSame(GateState::OFF, $this->featureFlags->gateState('foobar'));
     }

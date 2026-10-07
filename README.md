@@ -119,26 +119,10 @@ try {
 
 ### Telling "off" apart from "could not be evaluated"
 
-`enabled()` returns `false` both when a gate is off and when Statsig could not be asked (timeout, network error, non-200 response, or a body without a boolean `value`). That is the right answer for hiding a feature, but not for code that deletes data when a gate is off. Such callers use `gateState()`, which returns one of three `GateState` constants:
-
-```php
-use \Carsdotcom\FeatureFlags\Contracts\GateState;
-use \Carsdotcom\FeatureFlags\Contracts\GateStateReader;
-
-if ($flags instanceof GateStateReader) {
-    switch ($flags->gateState('my-new-feature')) {
-        case GateState::ON:
-            // the gate is on for this user
-            break;
-        case GateState::OFF:
-            // Statsig answered that the gate is off (or the gate does not exist)
-            break;
-        case GateState::UNAVAILABLE:
-            // the gate could not be evaluated; do not treat it as off
-            break;
-    }
-}
-```
+`enabled()` returns `false` both when a gate is off and when Statsig could not be asked (timeout, network error, non-200 response, or a body without a boolean `value`). That is the right answer for hiding a feature, but not for code that deletes data when a gate is off. Such callers use `gateState()` (from the `GateStateReader` interface), which returns one of three `GateState` constants:
+- `GateState::ON`: the gate is on for this user.
+- `GateState::OFF`: Statsig answered that the gate is off, or the gate does not exist.
+- `GateState::UNAVAILABLE`: the gate could not be evaluated; do not treat it as off.
 
 Caching:
 - An answer from Statsig (on or off) is cached for 5 minutes, and a failed check for 1 minute, so the next call after that asks Statsig again. This applies to `enabled()` and `gateState()`.
