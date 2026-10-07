@@ -4,6 +4,7 @@ namespace Carsdotcom\FeatureFlags\Service\Null;
 
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlag;
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlagUser;
+use Carsdotcom\FeatureFlags\Contracts\FlagState;
 
 class NullFeatureFlag implements FeatureFlag
 {
@@ -44,6 +45,16 @@ class NullFeatureFlag implements FeatureFlag
     public function enabled(string $featureFlagIdentifier): bool
     {
         return false;
+    }
+
+    /**
+     * Without a provider no flag can be evaluated, so callers that act on FlagState::OFF never act on this one.
+     *
+     * @inheritDoc
+     */
+    public function getFlagState(string $featureFlagIdentifier): string
+    {
+        return FlagState::UNAVAILABLE;
     }
 
     /**

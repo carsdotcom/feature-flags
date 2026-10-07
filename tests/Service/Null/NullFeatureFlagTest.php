@@ -2,6 +2,7 @@
 
 namespace Carsdotcom\FeatureFlags\Tests\Service\Null;
 
+use Carsdotcom\FeatureFlags\Contracts\FlagState;
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlag;
 use Carsdotcom\FeatureFlags\Service\Null\NullFeatureFlagUser;
 use PHPUnit\Framework\TestCase;
@@ -48,6 +49,14 @@ class NullFeatureFlagTest extends TestCase
     public function it_will_always_return_false_when_enabled_called()
     {
         $this->assertFalse($this->featureFlags->enabled('foobar'));
+    }
+
+    /**
+     * @test
+     */
+    public function itWillAlwaysReturnUnavailableWhenGetFlagStateCalled()
+    {
+        $this->assertSame(FlagState::UNAVAILABLE, $this->featureFlags->getFlagState('foobar'));
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Carsdotcom\FeatureFlags\Contracts;
 
+use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 
 interface FeatureFlag
@@ -37,6 +38,17 @@ interface FeatureFlag
      * @throws InvalidFeatureFlagUserException
      */
     public function enabled(string $featureFlagIdentifier): bool;
+
+    /**
+     * Returns FlagState::ON, FlagState::OFF or FlagState::UNAVAILABLE. Unlike enabled(), a failed evaluation is
+     * reported as FlagState::UNAVAILABLE instead of off.
+     *
+     * @param string $featureFlagIdentifier
+     * @return string
+     * @throws InvalidFeatureFlagSettingsException
+     * @throws InvalidFeatureFlagUserException
+     */
+    public function getFlagState(string $featureFlagIdentifier): string;
 
     /**
      * Will return true/false if the feature flag exists

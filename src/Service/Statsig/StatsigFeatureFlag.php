@@ -4,6 +4,7 @@ namespace Carsdotcom\FeatureFlags\Service\Statsig;
 
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlag;
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlagUser;
+use Carsdotcom\FeatureFlags\Contracts\FlagState;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 use Carsdotcom\FeatureFlags\Service\Redis\RedisFeatureFlagCache;
@@ -18,6 +19,11 @@ class StatsigFeatureFlag implements FeatureFlag
      */
     const DEFAULT_TTL = 300;
 
+    /**
+     * @var int 1 minute, so a failed gate check is retried soon instead of answering for the full DEFAULT_TTL.
+     */
+    const UNAVAILABLE_TTL = 60;
+
     const DEFAULT_GATE_REQUEST_TIMEOUT = 5;
 
     /**
@@ -29,6 +35,14 @@ class StatsigFeatureFlag implements FeatureFlag
      * @var string
      */
     const ALL_FEATURE_NAMES_KEY = 'all_feature_names';
+
+    /**
+     * getFlagState() results get their own cache keys: enabled() keys hold only booleans, which is all that
+     * consumers on older versions of this library can read from the shared cache.
+     *
+     * @var string
+     */
+    const FLAG_STATE_KEY_PREFIX = 'flag_state';
 
     /**
      * @var array
@@ -280,11 +294,46 @@ class StatsigFeatureFlag implements FeatureFlag
             return $cachedValue;
         }
 
-        $isEnabled = $this->isFeatureGateEnabled($featureFlagIdentifier);
+        $state = $this->evaluateGate($featureFlagIdentifier);
+        $isEnabled = $state === FlagState::ON;
 
-        $this->redisCache->set($cacheKey, $isEnabled, self::DEFAULT_TTL);
+        $this->redisCache->set($cacheKey, $isEnabled, $this->ttlFor($state));
 
         return $isEnabled;
+    }
+
+    /**
+     * Cache failures are skipped rather than reported, so the result always comes from Statsig or the cache.
+     *
+     * @param string $featureFlagIdentifier
+     * @return string
+     * @throws InvalidFeatureFlagSettingsException
+     * @throws InvalidFeatureFlagUserException
+     */
+    public function getFlagState(string $featureFlagIdentifier): string
+    {
+        $featureFlagIdentifier = strtolower($featureFlagIdentifier);
+        $this->validateInitialization();
+
+        $cacheKey = $this->getFlagStateCacheKey($featureFlagIdentifier, $this->getUser()->getId());
+        try {
+            $cachedState = $this->redisCache->get($cacheKey);
+        } catch (Throwable $e) {
+            $cachedState = null;
+        }
+        if (in_array($cachedState, FlagState::ALL, true)) {
+            return $cachedState;
+        }
+
+        $state = $this->evaluateGate($featureFlagIdentifier);
+
+        try {
+            $this->redisCache->set($cacheKey, $state, $this->ttlFor($state));
+        } catch (Throwable $e) {
+            // The result is still correct; the next call asks Statsig again.
+        }
+
+        return $state;
     }
 
     /**
@@ -298,6 +347,18 @@ class StatsigFeatureFlag implements FeatureFlag
         $featureFlagIdentifier = strtolower($featureFlagIdentifier);
         $this->validateInitialization();
 
+        return $this->evaluateGate($featureFlagIdentifier) === FlagState::ON;
+    }
+
+    /**
+     * Asks Statsig for one gate. Any failure (timeout, network error, non-200 response, or a body without a
+     * boolean "value") is FlagState::UNAVAILABLE.
+     *
+     * @param string $featureFlagIdentifier Already lowercased.
+     * @return string
+     */
+    private function evaluateGate(string $featureFlagIdentifier): string
+    {
         try {
             $response = $this->httpClient->post('check_gate', [
                 'timeout' => $this->settings['gateTimeout'] ?? self::DEFAULT_GATE_REQUEST_TIMEOUT,
@@ -311,15 +372,31 @@ class StatsigFeatureFlag implements FeatureFlag
                     'gateName' => $featureFlagIdentifier,
                 ]
             ]);
+            if ($response->getStatusCode() !== 200) {
+                return FlagState::UNAVAILABLE;
+            }
 
             $data = json_decode($response->getBody()->getContents(), true);
-
-            // Statsig returns false for non-existent gates in the same format:
-            // {"name":"my-fake-gate","value":false,"rule_id":null,"group_name":null}
-            return $data['value'] ?? false;
         } catch (Throwable $e) {
-            return false;
+            return FlagState::UNAVAILABLE;
         }
+
+        // Statsig answers a non-existent gate in the same format, so it reads as off:
+        // {"name":"my-fake-gate","value":false,"rule_id":null,"group_name":null}
+        if (!isset($data['value']) || !is_bool($data['value'])) {
+            return FlagState::UNAVAILABLE;
+        }
+
+        return $data['value'] ? FlagState::ON : FlagState::OFF;
+    }
+
+    /**
+     * @param string $state
+     * @return int
+     */
+    private function ttlFor(string $state): int
+    {
+        return $state === FlagState::UNAVAILABLE ? self::UNAVAILABLE_TTL : self::DEFAULT_TTL;
     }
 
     /**
@@ -405,6 +482,16 @@ class StatsigFeatureFlag implements FeatureFlag
     public function getCacheKey(string $gateName, string $userId): string
     {
         return implode('::', [$gateName, $userId]);
+    }
+
+    /**
+     * @param string $gateName
+     * @param string $userId
+     * @return string
+     */
+    public function getFlagStateCacheKey(string $gateName, string $userId): string
+    {
+        return implode('::', [self::FLAG_STATE_KEY_PREFIX, $gateName, $userId]);
     }
 
     /**
