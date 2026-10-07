@@ -4,6 +4,7 @@ namespace Carsdotcom\FeatureFlags\Tests\Service\Factory;
 
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlag;
 use Carsdotcom\FeatureFlags\Contracts\FeatureFlagUser;
+use Carsdotcom\FeatureFlags\Contracts\GateStateReader;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
 use Carsdotcom\FeatureFlags\Service\Factory\FeatureFlagFactory;
 use Carsdotcom\FeatureFlags\Service\Statsig\StatsigFeatureFlag;
@@ -62,6 +63,18 @@ class FeatureFlagFactoryTest extends TestCase
         $result = FeatureFlagFactory::create($this->validConfig(), 'user123');
 
         $this->assertInstanceOf(StatsigFeatureFlag::class, $result);
+    }
+
+    /**
+     * @test
+     */
+    public function createGateStateReaderReturnsTheStatsigSingletonAsAGateStateReader()
+    {
+        $result = FeatureFlagFactory::createGateStateReader($this->validConfig(), 'user123');
+
+        $this->assertInstanceOf(GateStateReader::class, $result);
+        $this->assertSame(StatsigFeatureFlag::getInstance(), $result);
+        $this->assertSame('user123', StatsigFeatureFlag::getInstance()->getUser()->getId());
     }
 
     /**

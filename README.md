@@ -119,7 +119,7 @@ try {
 
 ### Telling "off" apart from "could not be evaluated"
 
-`enabled()` returns `false` both when a gate is off and when Statsig could not be asked (timeout, network error, non-200 response, or a body without a boolean `value`). That is the right answer for hiding a feature, but not for code that deletes data when a gate is off. Such callers use `gateState()` (from the `GateStateReader` interface), which returns one of three `GateState` constants:
+`enabled()` returns `false` both when a gate is off and when Statsig could not be asked (timeout, network error, non-200 response, or a body without a boolean `value`). That is the right answer for hiding a feature, but not for code that deletes data when a gate is off. Such callers create the service with `FeatureFlagFactory::createGateStateReader($sdkConfig, $userId)`, which returns the same Statsig service as `create()` typed as `GateStateReader`, and call `gateState()`. It returns one of three `GateState` constants:
 - `GateState::ON`: the gate is on for this user.
 - `GateState::OFF`: Statsig answered that the gate is off, or the gate does not exist.
 - `GateState::UNAVAILABLE`: the gate could not be evaluated; do not treat it as off.
@@ -127,7 +127,8 @@ try {
 Caching:
 - An answer from Statsig (on or off) is cached for 5 minutes, and a failed check for 1 minute, so the next call after that asks Statsig again. This applies to `enabled()` and `gateState()`.
 - `gateState()` results are cached under their own keys (`gate_state::<gate>::<user>`). The `enabled()` keys keep holding only booleans, so consumers on older versions of this library sharing the same cache are not affected.
-- If the cache cannot be read or written, `gateState()` asks Statsig directly instead of failing.
+- `enabled()` and `gateState()` do not share cache entries, so calling both for the same gate and user can make two Statsig requests in the same window.
+- If the cache cannot be read or written, `gateState()` asks Statsig directly instead of failing, so with both Redis and Statsig down every call waits for the gate timeout (5 seconds unless `gateTimeout` is set). Callers that cannot tolerate that latency should use `enabled()`.
 
 ## Null Feature Flag
 This service will **always** return as if there are no feature flags enabled/exist and never throw any exceptions.
@@ -150,7 +151,7 @@ $flags->exists('foobar');
 // will always return false
 $flags->enabled('foobar');
 
-// will always return GateState::OFF
+// will always return GateState::UNAVAILABLE, since no gate can be evaluated without a provider
 $flags->gateState('foobar');
 
 // will always return en empty array

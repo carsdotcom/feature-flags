@@ -12,7 +12,8 @@ final class GateState
     const OFF = 'off';
 
     /**
-     * The provider could not be asked, or its answer could not be read. It does not mean the gate is off.
+     * The gate could not be evaluated: there is no provider, it could not be asked, or its answer could not be
+     * read. It does not mean the gate is off.
      */
     const UNAVAILABLE = 'unavailable';
 

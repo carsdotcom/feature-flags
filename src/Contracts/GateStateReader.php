@@ -2,6 +2,7 @@
 
 namespace Carsdotcom\FeatureFlags\Contracts;
 
+use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagSettingsException;
 use Carsdotcom\FeatureFlags\Exceptions\InvalidFeatureFlagUserException;
 
 interface GateStateReader
@@ -12,6 +13,7 @@ interface GateStateReader
      *
      * @param string $featureFlagIdentifier
      * @return string
+     * @throws InvalidFeatureFlagSettingsException
      * @throws InvalidFeatureFlagUserException
      */
     public function gateState(string $featureFlagIdentifier): string;

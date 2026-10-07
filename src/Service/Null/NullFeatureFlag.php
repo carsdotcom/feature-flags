@@ -49,11 +49,13 @@ class NullFeatureFlag implements FeatureFlag, GateStateReader
     }
 
     /**
+     * Without a provider no gate can be evaluated, so callers that act on GateState::OFF never act on this one.
+     *
      * @inheritDoc
      */
     public function gateState(string $featureFlagIdentifier): string
     {
-        return GateState::OFF;
+        return GateState::UNAVAILABLE;
     }
 
     /**
