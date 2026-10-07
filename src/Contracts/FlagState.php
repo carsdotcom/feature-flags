@@ -17,6 +17,8 @@ final class FlagState
      */
     const UNAVAILABLE = 'unavailable';
 
+    const ALL = [self::ON, self::OFF, self::UNAVAILABLE];
+
     private function __construct()
     {
     }

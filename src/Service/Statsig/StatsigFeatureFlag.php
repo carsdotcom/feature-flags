@@ -321,7 +321,7 @@ class StatsigFeatureFlag implements FeatureFlag
         } catch (Throwable $e) {
             $cachedState = null;
         }
-        if (in_array($cachedState, [FlagState::ON, FlagState::OFF, FlagState::UNAVAILABLE], true)) {
+        if (in_array($cachedState, FlagState::ALL, true)) {
             return $cachedState;
         }
 
@@ -383,7 +383,7 @@ class StatsigFeatureFlag implements FeatureFlag
 
         // Statsig answers a non-existent gate in the same format, so it reads as off:
         // {"name":"my-fake-gate","value":false,"rule_id":null,"group_name":null}
-        if (!is_array($data) || !array_key_exists('value', $data) || !is_bool($data['value'])) {
+        if (!isset($data['value']) || !is_bool($data['value'])) {
             return FlagState::UNAVAILABLE;
         }
 
